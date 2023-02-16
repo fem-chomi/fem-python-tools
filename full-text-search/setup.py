@@ -1,3 +1,4 @@
+# Copyright (C) 2023 fem. All rights reserved.
 from setuptools import setup, find_packages
 
 setup(

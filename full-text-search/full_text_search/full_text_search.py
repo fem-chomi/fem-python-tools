@@ -1,3 +1,4 @@
+# Copyright (C) 2023 fem. All rights reserved.
 from full_text_search_logic import Logic
 
 logic = Logic()

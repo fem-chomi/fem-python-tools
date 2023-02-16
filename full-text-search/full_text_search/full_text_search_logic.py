@@ -1,3 +1,4 @@
+# Copyright (C) 2023 fem. All rights reserved.
 import os
 import openpyxl
 import hashlib
