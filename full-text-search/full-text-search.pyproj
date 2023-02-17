@@ -12,6 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>full-text-search</Name>
     <RootNamespace>full-text-search</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
