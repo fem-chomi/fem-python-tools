@@ -103,18 +103,21 @@ class Logic:
         result_text = ''
         first = True
         for row in results:
-            if first:
-                first = False
-            else:
-                result_text += '\n-------------------------\n'
-                
             source_type = row[1]
             hash = row[2]
             if source_type == 'memo':
-                result_text = row[0]
+                if first:
+                    first = False
+                else:
+                    result_text += '\n-------------------------\n'
+                result_text += row[0]
             elif source_type == 'www':
+                if first:
+                    first = False
+                else:
+                    result_text += '\n-------------------------\n'
                 html = self.searchWww(hash)
-                result_text = html
+                result_text += html
             elif source_type == 'code':
                 codes = self.searchSourceCode(hash)
                 for code in codes:
@@ -122,7 +125,7 @@ class Logic:
                         first = False
                     else:
                         result_text += '\n-------------------------\n'
-                    result_text += '{0} ({1}): {2}'.format(code[0], code[1], row[0])
+                    result_text += '{0} ({1}):\n{2}'.format(code[0], code[1], row[0])
             elif source_type == 'text':
                 text = self.searchTextFile(hash)
                 for line in text:
@@ -130,7 +133,7 @@ class Logic:
                         first = False
                     else:
                         result_text += '\n-------------------------\n'
-                    result_text += '{0} {1}: {2}'.format(line[0], line[1], row[0])
+                    result_text += '{0} {1}:\n{2}'.format(line[0], line[1], row[0])
             elif source_type == 'excel':
                 cells = self.searchExcelFile(hash)
                 for cell in cells:
@@ -138,8 +141,12 @@ class Logic:
                         first = False
                     else:
                         result_text += '\n-------------------------\n'
-                    result_text += '{0} 「{1}」シート({2}, {3}): {4}'.format(cell[0], cell[1], cell[2], cell[3], row[0])
+                    result_text += '{0} 「{1}」シート({2}):\n{3}'.format(cell[0], cell[1], '{0}{1}'.format(openpyxl.utils.get_column_letter(cell[2]), cell[3]), row[0])
             else:
+                if first:
+                    first = False
+                else:
+                    result_text += '\n-------------------------\n'
                 result_text += row[0]
 
         return result_text
