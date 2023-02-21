@@ -1,5 +1,7 @@
 # Copyright (C) 2023 fem. All rights reserved.
 import os
+import glob
+import chardet
 import openpyxl
 import hashlib
 from full_text_search_dao import Dao
@@ -7,6 +9,46 @@ from full_text_search_dao import Dao
 class Logic:
     def __init__(self):
         self.dao = Dao()
+
+    def detect_file(self, filename):
+        with open(filename, mode='rb') as f:
+            bin = f.read()
+            char_set = chardet.detect(bin)
+            if char_set == None:
+                return None
+            else:
+                return char_set['encoding']
+    
+    def read_text_file_utf8(self, filename):
+        enc = self.detect_file(filename)
+        try:
+            if enc == None:
+                return None
+            elif enc == 'Windows-1252':
+                with open(filename, mode='r', encoding='Shift_JIS') as f:
+                    return f.read()
+            else:
+                with open(filename, mode='r', encoding=enc) as f:
+                    return f.read()
+        except UnicodeDecodeError:
+            print('UnicodeDecodeError: {0}'.format(filename))
+
+    def read_lines_text_file_utf8(self, filename):
+        enc = self.detect_file(filename)
+        try:
+            if enc == None:
+                return None
+            elif enc == 'Windows-1252':
+                with open(filename, mode='r', encoding='Shift_JIS') as f:
+                    lines = []
+                    for line in f.readlines():
+                        lines.append(line)
+                    return lines
+            else:
+                with open(filename, mode='r', encoding=enc) as f:
+                    return f.read()
+        except UnicodeDecodeError:
+            print('UnicodeDecodeError: {0}'.format(filename))
 
     def registCommon(self, source_type, text, check):
         hash = hashlib.sha1(text.encode('utf-8')).hexdigest()
@@ -31,30 +73,32 @@ class Logic:
     def registSourceCode(self, filename):
         if not os.path.exists(filename):
             return
-        file = open(filename, 'r', encoding='utf-8')
         line_no = 0
-        for line in file.readlines():
+        lines = self.read_lines_text_file_utf8(filename)
+        if lines == None:
+            return
+        for line in lines:
             line_no = line_no + 1
             if line.strip() == '':
                 continue
             hash = self.registCommon('code', line.strip(), False)
             if hash != None:
                 self.dao.insertSourceFileTable(hash, filename, line_no)
-        file.close()
     
     def registTextFile(self, filename):
         if not os.path.exists(filename):
             return
-        file = open(filename, 'r', encoding='utf-8')
         line_no = 0
-        for line in file.readlines():
+        lines = self.read_lines_text_file_utf8(filename)
+        if lines == None:
+            return
+        for line in lines:
             line_no = line_no + 1
             if line.strip() == '':
                 continue
             hash = self.registCommon('text', line.strip(), False)
             if hash != None:
                 self.dao.insertTextFileTable(hash, filename, line_no)
-        file.close()
     
     def registExcelFile(self, filename):
         if not os.path.exists(filename):
@@ -82,6 +126,24 @@ class Logic:
         #page
         #line_no
         pass
+
+    def registDirectory(self, dir):
+        files = glob.glob(os.path.normpath(os.path.join(dir, '**/*')), recursive=True)
+        for path in files:
+            ext = os.path.splitext(path)[1].lower()
+            if ext == '.txt':
+                self.registTextFile(path)
+            elif ext == '.xlsx' or ext == '.xlsm':
+                # EXCEL
+                self.registExcelFile(path)
+            elif ext == '.docx':
+                # WORD
+                self.registWordFile(path)
+            elif ext == '.pdf':
+                # PDF
+                self.registPdfFile(path)
+            else:
+                continue
 
     def searchCommon(self, keyword):
         return self.dao.selectTextTable(keyword)
